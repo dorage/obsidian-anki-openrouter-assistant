@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-to-anki-assistant",
 	"name": "Anki Card Generator",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Generate Anki flashcards from your notes using OpenRouter LLM API",
 	"author": "KangHyun Lee",
