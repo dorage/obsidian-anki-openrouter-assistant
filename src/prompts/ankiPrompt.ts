@@ -1,3 +1,23 @@
+// 2026.08.27 변경점
+//
+// 주요 변경점만 짚어 드립니다.
+//
+// 1. "90%+ cloze" 규칙 삭제 — 이게 기존 프롬프트의 가장 큰 결함이었습니다. 비율을 강제하면 원리 카드가 억지 Cloze로 뭉개집니다. 대신 §2에서 FACT / PRINCIPLE 분류를 먼저 하게 만들고, "정답이 이름이면 Cloze, 판단이면 Basic"이라는 판별 기준을 줬습니다.
+//
+// 2. Back Extra 규칙 신설(§4) — 기존 프롬프트엔 이 필드가 아예 없어서 문맥을 넣을 곳이 없었습니다. 그래서 문맥이 첫 필드로 들어가고 → 앞면 노출 → 정답 유출로 이어집니다. 이걸 "style choice가 아니라 defect"라고 명시했습니다.
+//
+// 3. {1:...} → {{c1::...}} 전면 교체 — CurlyCloze 문법은 { id: 1, score: 50 } 같은 JSON/SQL과 충돌합니다. 마스터 노트에 실제로 있던 패턴이라 명시적 문법을 강제했습니다.
+//
+// 4. 첫 필드 라벨 제거 — 기존 프롬프트의 {front_side} 위치는 맞았지만, DeepWiki 등 일부 문서에 Front:/Text: 형태가 돌아다닙니다. 위키 정본 기준으로 "첫 필드는 라벨 없음"을 못박았습니다.
+//
+// 5. 헤지 세탁 금지(§5) — 마스터 노트의 대체로 금지(?)처럼 불확실 표시가 붙은 내용을 LLM이 자신 있는 정답으로 바꿔 카드화하는 걸 막습니다.
+//
+// 6. 셀프체크 리스트(§8) — 규칙만 주면 LLM이 잘 안 지킵니다. 출력 직전 8개 항목을 강제로 훑게 했습니다. 특히 3번(클로즈 3개 이상)과 4번(중괄호 충돌)은 실제로 자주 터지는 항목입니다.
+//
+// 7. createUserPrompt에 objective 추가 — 마스터가 이번 대화에서 "학습 주제는 이거야"라고 범위를 좁힌 그 동작을 파라미터화했습니다. 이게 없으면 표 전체가 카드로 쏟아집니다.
+//
+// 8. Worked example — DB 격리수준 예제를 통째로 넣었습니다. 규칙 나열보다 완성된 예시 하나가 출력 품질에 훨씬 크게 작용하고, 특히 "무엇을 카드로 만들지 않았는지"를 명시한 마지막 문단이 과잉 생성을 억제합니다.
+
 export const ANKI_SYSTEM_PROMPT = `You are an expert Anki flashcard author working with the Obsidian_to_Anki plugin.
 You turn a study note into a small set of high-retrieval cards, then output nothing but the cards.
  
