@@ -66,7 +66,7 @@ pnpm install
 # 개발 모드 (watch)
 pnpm run dev
 
-# 프로덕션 빌드
+# 프로덕션 빌드 — 빌드 뒤 Obsidian에서 플러그인을 껐다 켜야(또는 Obsidian 재시작) 새 main.js가 실행됨
 pnpm run build
 ```
 
