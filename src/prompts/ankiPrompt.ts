@@ -1,3 +1,15 @@
+// 2026.09.15 2차 변경점 (SOLID 노트로 기대 출력을 손으로 써 보며 드러난 틈)
+//
+// 1. 정의 문장은 I 카드 뒷면에 "정의:" 한 줄로 넣는다(§5). 판정 직후에 정의를 다시 읽는 편이
+//    정의만 따로 Cloze로 외우는 것보다 낫고, 개념당 카드 수도 줄어든다. R 카드는 I 카드가 없는 개념에만.
+// 2. 아티팩트 하나가 두 원칙으로 읽힐 때(RobotWorker의 throw는 ISP로도 LSP로도 읽힌다) I 카드 앞면에
+//    노트가 제시한 사건·결과 한 줄을 붙여 판정을 하나로 고정한다(§4.3).
+// 3. 노트당 15장 상한을 없앴다. 다섯 원칙 + 불변식 + 공통 명제를 가진 노트는 20장이 적정이었다.
+//    개념당 3장 상한과 학습 목표가 크기를 정하고, 20장을 넘으면 개념 목록을 다시 본다(§3).
+// 4. 세션 전체의 [도달] 결론(예: SOLID 공통 명제)은 과목 지식이므로 자기완결 문장으로 고쳐 R 카드로 만든다(§7.1).
+//    이전 문구로는 "앵커" 참조 금지에 걸려 결론 자체가 통째로 빠질 수 있었다.
+// 5. examples/solid-reference.md — 이 노트에 대한 기대 출력 전체. 이후 프롬프트를 바꿀 때 실제 출력과 대조하는 기준.
+//
 // 2026.09.15 변경점
 //
 // 계기: "OOP SOLID 사용예시" 소크라테스 기록을 카드로 만들었더니 31장이 전부 Cloze였고,
@@ -87,14 +99,19 @@ Do not chase any ratio between types. Let the note's content decide through the 
 Step 1. List the distinct concepts in scope (e.g. the five SOLID principles; two isolation levels).
         If the caller gave a learning objective, only concepts inside it count.
 Step 2. For each concept the note illustrates with code or a concrete scenario:
-          - one I card (the artifact, de-labeled, "what is this an instance of")
+          - one I card (the artifact, de-labeled, "what is this an instance of").
+            The concept's definition sentence goes on the I card's back (§5), not into a separate R card.
           - one F card if the note states the fix, otherwise one P card if the note states the consequence
-          - one R card only if the definition sentence itself is worth memorising
+          - a third card (P alongside F, or R) only if it tests something the first two do not
+        For a concept the note states but never illustrates: one R card, if the sentence is worth memorising.
+        A session-wide conclusion the note marks as reached ([도달], "최종 명제") is subject knowledge:
+        one R card, rewritten as a self-contained sentence.
 Step 3. For each pair of concepts the note explicitly contrasts: at most one D card.
-Step 4. Budget: at most 3 cards per concept, at most 15 per note. If over budget, drop R cards first,
-        then merge P into I (ask for the consequence inside the I card's back).
+Step 4. Budget: at most 3 cards per concept. There is no fixed per-note cap — the concept list and the
+        learning objective set the size. If the total passes 20, re-check the concept list for incidental
+        concepts before writing; if a concept is over 3, drop R first, then merge P into I.
 Step 5. Optionally write the plan as ONE HTML comment on the first line of the output, e.g.
-        <!-- plan: SRP I+F, ISP I+P, LSP I+P+R, OCP I+F, DIP I+F, D: OCP-vs-DIP -->
+        <!-- plan: SRP I+P+F, ISP I+P+F, LSP I+P+R, OCP I+F, DIP I+F, D: OCP-vs-DIP -->
         The plugin ignores it. Nothing else may appear outside START/END.
 
 ================================================================
@@ -116,6 +133,9 @@ Step 5. Optionally write the plan as ONE HTML comment on the first line of the o
 4.3 I front = artifact + one question that demands a verdict AND a location.
     "다섯 원칙 중 무엇을 어기는가? 근거가 되는 줄은?" — candidate set implicit when it is a known closed set,
     listed explicitly otherwise.
+    If the artifact alone admits two verdicts (a subtype that throws UnsupportedOperationException reads as
+    ISP or as LSP), add the one event or consequence line the note used to pin it:
+    "eat()의 시그니처를 바꿨더니 RobotWorker도 고쳐야 컴파일이 된다." Then the question has one answer.
 
 4.4 P front = artifact + ONE concrete event line + a question with a checkable answer.
     Event: a request ("총무팀: eat()에 알러지 인자 추가"), a call ("testArea(new Square())"), a change.
@@ -141,6 +161,7 @@ I back:
   <principle / concept>
 
   근거: <the line or expression, quoted>
+  정의: <the concept's definition sentence as the note states it — this is where the definition is learned>
   <one line: why the nearest confusable concept is NOT the answer — only when the note supports it>
 
 P back:
@@ -204,6 +225,10 @@ review heavier for no added recall.
     - [사실] lines are R material, and the stated fixes inside them are F-back material.
     - [응답] [사고] "반복된 사고 패턴" "자기 점검" describe the LEARNER, not the subject. They are NOT cards
       unless the objective explicitly asks for metacognition.
+    - A [도달] conclusion that closes the whole session ("최종 명제") is subject knowledge. Make it one R card,
+      rewritten so it stands without the session: "다섯 원칙이 공통으로 하는 일은 ..." not "앵커 2의 최종 명제는 ...".
+      The derivation steps that led there ("③이 LSP에서 무너졌다") are not cards; the strongest counterexample
+      may go in that R card's Back Extra.
     - [미해결] [보류] have no confirmed answer. No card.
     - Session-structure references never appear on a card: "앵커 2", "②", "그 줄", "위의 표", "이 세션에서".
       Every card must be readable by someone who has never seen the note.
@@ -239,9 +264,11 @@ split by actor into EmployeeData / PayCalculator / HourReporter / EmployeeReposi
 after introducing Shape the arrows become AreaCalculator → Shape ← Rectangle, Circle — "this shape is DIP".
 The note ends with reflections on the learner's answering patterns and a list of open questions.
 
-Plan: SRP I+P+F, ISP I+P, LSP I+P+R, OCP I+F, DIP I+F, D: OCP-vs-DIP. Reflections and open questions: no cards.
+Plan: SRP I+P+F, ISP I+P+F, LSP I+P+R, OCP I+P+F, DIP I+P+F, D: OCP-vs-DIP, D: LSP-vs-SRP·ISP,
+불변식 R+D, 공통명제 R — 20 cards. Reflections and open questions: no cards.
+The five cards below are a sample of that set; the full expected output is kept in examples/solid-reference.md.
 
-<!-- plan: SRP I+P+F, ISP I+P, LSP I+P+R, OCP I+F, DIP I+F, D: OCP-vs-DIP -->
+<!-- plan: SRP I+P+F, ISP I+P+F, LSP I+P+R, OCP I+P+F, DIP I+P+F, D: OCP-vs-DIP, D: LSP-vs-SRP·ISP, 불변식 R+D, 공통명제 R -->
 
 START
 Basic
@@ -262,6 +289,7 @@ class Employee {
 Back: SRP
 
 근거: 세 요청자의 요청이 모두 같은 \`Employee\` 파일을 연다. 특히 \`billableHours()\`를 \`calculatePay\`와 \`reportHours\`가 공유해서 재무팀 요청이 인사팀 결과에 닿는다.
+정의: 하나의 모듈은 하나의 액터(변경을 요구하는 주체)에 대해서만 책임진다.
 ISP가 아닌 이유: 쓰지 않는 메서드에 의존하도록 강요받는 클라이언트가 없다. 문제는 인터페이스가 아니라 한 클래스가 여러 액터를 섬기는 것이다.
 Tags: oop::solid::srp
 END
@@ -330,7 +358,8 @@ Run every card through this. Fix, do not annotate.
 7.  Cloze: any deleted word visible elsewhere? Any 3+ distinct cloze numbers? Any raw "{" in a Cloze first
     field? Any deletion inside a code fence?
 8.  Did any fact enter that the note does not state? Did a hedge become a confident answer?
-9.  Over budget (3 per concept, 15 per note)? Drop R first, then merge P into I.
+9.  Any concept over 3 cards? Drop R first, then merge P into I. Any I card missing its 정의 line when the
+    note states a definition?
 10. Trailing whitespace on any START / END / TARGET DECK / FILE TAGS line? Full artifact repeated in
     more than one card?
 

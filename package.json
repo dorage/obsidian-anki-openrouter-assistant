@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-to-anki-assistant",
-	"version": "1.0.0",
+	"version": "1.0.3",
 	"description": "Generate Anki flashcards from your notes using OpenRouter LLM API",
 	"main": "main.js",
 	"scripts": {
