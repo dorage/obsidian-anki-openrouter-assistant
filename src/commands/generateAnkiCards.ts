@@ -33,6 +33,7 @@ export async function generateAnkiCards(plugin: AnkiAssistantPlugin): Promise<vo
 	}
 
 	const filename = activeFile.basename;
+	const objective = getObjective(plugin, activeFile);
 
 	new Notice('Generating Anki cards...');
 
@@ -41,7 +42,7 @@ export async function generateAnkiCards(plugin: AnkiAssistantPlugin): Promise<vo
 		const openRouter = new OpenRouterService(settings.openRouterApiKey, settings.model);
 		const response = await openRouter.generateCompletion([
 			{ role: 'system', content: ANKI_SYSTEM_PROMPT },
-			{ role: 'user', content: createUserPrompt(content, filename) },
+			{ role: 'user', content: createUserPrompt(content, filename, objective) },
 		]);
 
 		// Create output file
@@ -68,6 +69,16 @@ export async function generateAnkiCards(plugin: AnkiAssistantPlugin): Promise<vo
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 		new Notice(`Error: ${errorMessage}`);
 	}
+}
+
+/**
+ * Optional learning objective from the note's frontmatter (`anki-objective: ...`).
+ * When present it narrows the card set to that scope (see ANKI_SYSTEM_PROMPT §8).
+ */
+function getObjective(plugin: AnkiAssistantPlugin, file: TFile): string | undefined {
+	const fm = plugin.app.metadataCache.getFileCache(file)?.frontmatter;
+	const value = fm?.['anki-objective'];
+	return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
 function getOutputPath(sourceFile: TFile, outputFilename: string): string {

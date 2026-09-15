@@ -21,7 +21,12 @@ OpenRouter LLM API를 사용하여 Obsidian 노트에서 Anki 플래시카드를
    - `Generate Anki cards from current note` 선택
    - `anki-{파일명}.md` 파일이 같은 폴더에 생성됨
 
-3. **Anki로 가져오기**
+3. **학습 목표로 범위 좁히기 (선택)**
+   - 노트 프론트매터에 `anki-objective`를 적으면 그 범위 안의 내용만 카드가 됨
+   - 예: `anki-objective: 코드를 보고 SOLID 중 어떤 원칙을 어겼는지 판정하고, 고치는 방법을 말할 수 있다`
+   - 없으면 노트 전체가 대상
+
+4. **Anki로 가져오기**
    - [Obsidian-to-Anki](https://github.com/Pseudonium/Obsidian_to_Anki) 플러그인 사용
    - 생성된 카드 파일을 Anki로 동기화
 
