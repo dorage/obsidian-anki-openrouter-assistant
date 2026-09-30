@@ -1,4 +1,27 @@
-<!-- plan: SRP I+P+F, ISP I+P+F, LSP I+P+R, OCP I+P+F, DIP I+P+F, D: OCP-vs-DIP, D: LSP-vs-SRP·ISP, 불변식 R+D, 공통명제 R -->
+<!-- plan: SRP def×2+I+P+F, ISP def×2+I+P+F, LSP def×2+I+P, OCP def×2+I+F, DIP def×2+I+P+F, D: OCP-vs-DIP, D: LSP-vs-ISP, 불변식 def×2+D, 공통명제 R — 29 cards -->
+
+START
+Basic
+[SOLID] SRP(Single Responsibility Principle, 단일 책임 원칙)의 정의를 한 문장으로 말하라.
+Back: 하나의 모듈은 하나의 액터(변경을 요구하는 주체)에 대해서만 책임진다.
+
+채점: 뜻이 맞으면 정답.
+- 책임의 단위를 "기능"이나 "일"이 아니라 변경을 요구하는 사람·집단(액터)으로 말했는가
+- 한 모듈이 섬기는 액터가 하나여야 한다는 뜻이 들어 있는가
+오답 예: "클래스는 한 가지 일만 해야 한다" — 액터가 빠져 있어, 한 가지 일을 두 요청자가 고치는 경우를 설명하지 못한다.
+Tags: oop::solid::srp def
+END
+
+START
+Basic
+[SOLID] 다음 정의에 해당하는 원칙은? (후보: SRP, OCP, LSP, ISP, DIP)
+
+하나의 모듈은 하나의 액터(변경을 요구하는 주체)에 대해서만 책임진다.
+Back: SRP (Single Responsibility Principle, 단일 책임 원칙)
+
+가르는 말: "액터" — ISP도 무언가를 작게 나누지만, ISP의 기준은 클라이언트가 쓰지 않는 메서드다.
+Tags: oop::solid::srp def
+END
 
 START
 Basic
@@ -6,45 +29,70 @@ Basic
 ```java
 class Employee {
     private int hoursWorked, hourlyRate;
+    private int billableHours() { return Math.min(hoursWorked, 40); }
 
-    int    calculatePay() { return hoursWorked * hourlyRate; }
-    String reportHours()  { return "총 " + hoursWorked + "시간"; }
+    int    calculatePay() { return billableHours() * hourlyRate; }
+    String reportHours()  { return "총 " + billableHours() + "시간"; }
     void   save()         { db.execute("UPDATE employee SET ..."); }
 }
 ```
-들어온 요청: 재무팀장 "초과근무 수당 계산식 변경", 인사팀장 "리포트에 부서명 추가", DBA "스키마 변경으로 쿼리 수정".
+요청자: 재무팀장(수당 계산식), 인사팀장(리포트 양식), DBA(스키마 변경).
 
-다섯 원칙 중 무엇을 어기는가? 근거는 어느 줄인가?
+근거가 되는 줄은? 그 줄 때문에 다섯 원칙 중 어기는 원칙을 모두 적어라.
 Back: SRP
 
-근거: 세 요청이 각각 `calculatePay` / `reportHours` / `save`에 닿아, 이 파일 하나가 세 명의 요청자 때문에 수정된다.
-정의: 하나의 모듈은 하나의 액터(변경을 요구하는 주체)에 대해서만 책임진다.
-ISP가 아닌 이유: 쓰지 않는 메서드에 의존하도록 강요받는 클라이언트가 없다. 문제는 인터페이스가 아니라 한 클래스가 여러 액터를 섬기는 것이다.
+근거: `private int billableHours()` — 서로 다른 요청자가 관할하는 `calculatePay`와 `reportHours`가 이 한 줄을 공유한다. 세 요청이 모두 같은 `Employee` 파일을 연다.
+ISP가 아닌 이유: 쓰지 않는 메서드에 의존하도록 강요받는 클라이언트가 없다. 문제는 인터페이스가 아니라 한 클래스가 여러 요청자를 섬기는 것이다.
 Tags: oop::solid::srp
 END
 
 START
 Basic
-[OOP] `Employee`의 `calculatePay`와 `reportHours`가 헬퍼 `billableHours() = Math.min(hoursWorked, 40)`을 함께 쓴다.
+[OOP] `Employee.billableHours()`는 `Math.min(hoursWorked, 40)`이다. 수당 계산 `calculatePay()`는 `billableHours() * hourlyRate`를, 인사팀 리포트 `reportHours()`는 `"총 " + billableHours() + "시간"`을 반환한다.
 
-재무팀 요청으로 40시간 상한을 없애 `return hoursWorked;`로 바꾸고 배포했다. `hoursWorked = 50`인 직원의 인사팀 월간 리포트 문자열은 배포 전과 후에 각각 무엇인가? 이 변화를 요청한 팀은?
-Back: 전 "총 40시간" / 후 "총 50시간". 요청한 팀은 재무팀.
+재무팀 요청으로 40시간 상한을 없애 `billableHours()`를 `return hoursWorked;`로 바꾸고 배포했다. `hoursWorked = 50`인 직원의 인사팀 월간 리포트 문자열은 배포 전과 후에 각각 무엇인가?
+Back: 전: "총 40시간" / 후: "총 50시간"
 
-`reportHours`는 손대지 않았지만 공유 헬퍼의 상한이 사라져 반환값이 바뀐다. 요청한 쪽과 값이 바뀐 쪽이 다르다.
+`reportHours`는 손대지 않았지만 공유 헬퍼의 상한이 사라져 반환값이 바뀐다. 요청한 쪽은 재무팀, 값이 바뀐 쪽은 인사팀이다.
 Tags: oop::solid::srp
 END
 
 START
 Basic
-[OOP] `Employee`(calculatePay / reportHours / save, 두 메서드가 공유하는 헬퍼 billableHours)를
-재무팀 요청이 인사팀 리포트 값을 바꾸지 않도록 SRP에 맞게 재구성하라. 어떤 단위로 나누고, 재무팀 요청은 어느 단위만 열게 되는가?
-Back: 액터별로 분리 — `EmployeeData` / `PayCalculator` / `HourReporter` / `EmployeeRepository`. 재무팀 요청은 `PayCalculator`만 연다.
+[OOP] `Employee` 한 클래스에 수당 계산 `calculatePay`(재무팀 관할), 근무시간 리포트 `reportHours`(인사팀 관할), DB 저장 `save`(DBA 관할)가 있다. 앞의 두 메서드는 근무시간을 40시간으로 자르는 헬퍼 `billableHours()`를 함께 쓴다.
+
+이 클래스를, 재무팀 요청이 인사팀 리포트 값을 바꾸지 않도록 SRP에 맞게 재구성하라. 무엇을 기준으로 나누고, 재무팀 요청은 어떤 책임을 가진 단위만 열게 되는가?
+Back: 요청자(액터)마다 단위를 나눠, 재무팀 요청은 수당 계산을 맡은 단위 하나만 연다.
 
 판정 기준:
 - 재무팀 요청으로 열리는 단위가 하나뿐인가
-- `reportHours`와 `calculatePay`가 더 이상 같은 헬퍼 구현을 공유하지 않는가
+- 수당 계산과 시간 리포트가 더 이상 같은 헬퍼 구현을 공유하지 않는가
 - 분리 기준이 기술 계층(DB, UI)이 아니라 요청자(액터)인가
-Tags: oop::solid::srp
+
+참고 구조(이름은 채점하지 않는다): `EmployeeData`(데이터만) / `PayCalculator`(재무팀) / `HourReporter`(인사팀) / `EmployeeRepository`(DBA)
+Tags: oop::solid::srp fix
+END
+
+START
+Basic
+[SOLID] ISP(Interface Segregation Principle, 인터페이스 분리 원칙)의 정의를 한 문장으로 말하라.
+Back: 클라이언트는 자신이 쓰지 않는 메서드에 의존하도록 강요받지 않는다.
+
+채점: 뜻이 맞으면 정답.
+- 주어가 인터페이스를 쓰는 쪽(클라이언트)인가
+- "쓰지 않는 메서드에 대한 의존"을 금지하는 뜻이 들어 있는가
+Tags: oop::solid::isp def
+END
+
+START
+Basic
+[SOLID] 다음 정의에 해당하는 원칙은? (후보: SRP, OCP, LSP, ISP, DIP)
+
+클라이언트는 자신이 쓰지 않는 메서드에 의존하도록 강요받지 않는다.
+Back: ISP (Interface Segregation Principle, 인터페이스 분리 원칙)
+
+가르는 말: "쓰지 않는 메서드" — SRP도 무언가를 나누지만, SRP의 기준은 변경을 요구하는 액터다.
+Tags: oop::solid::isp def
 END
 
 START
@@ -60,40 +108,61 @@ class RobotWorker      implements Worker {
     public void attendMeeting() { throw new UnsupportedOperationException(); }
 }
 ```
-총무팀 요청으로 `eat()`을 `eat(Allergy a)`로 바꿨더니 `RobotWorker`도 고쳐야 컴파일이 된다.
+근거가 되는 줄은? 그 줄 때문에 다섯 원칙 중 어기는 원칙을 모두 적어라.
+Back: ISP, LSP
 
-이 장면이 드러내는 위반은 다섯 원칙 중 무엇인가? 근거는 어느 줄인가?
-Back: ISP
-
-근거: `RobotWorker`는 `eat()`을 쓰지 않는데(`UnsupportedOperationException`) `Worker`를 통해 그 메서드에 의존하고 있어, 알러지와 무관한 변경에 끌려 들어간다.
-정의: 클라이언트는 자신이 쓰지 않는 메서드에 의존하도록 강요받지 않는다.
-LSP가 아닌 이유: LSP는 실행 중에 조용히 틀린 값이 나오느냐를 보는데, 이 장면은 실행에 도달하지 못하고 컴파일에서 걸린다.
+근거: `class RobotWorker implements Worker`와 `eat()` / `attendMeeting()`의 `throw` 두 줄.
+- ISP: `RobotWorker`가 쓰지 않는 `eat()`, `attendMeeting()`에 `Worker`를 통해 의존하도록 강요받는다.
+- LSP: `Worker` 타입으로 `eat()`을 부르는 코드는 그 자리에 `RobotWorker`가 들어오면 실행 중 예외를 만난다.
 Tags: oop::solid::isp
 END
 
 START
 Basic
-[OOP] `interface Worker { work(); eat(); attendMeeting(); }`를 `FullTimeEmployee`(셋 다 구현)와 `RobotWorker`(`eat`, `attendMeeting`은 예외를 던짐)가 구현한다.
+[OOP] `interface Worker { void work(); void eat(); void attendMeeting(); }`를 두 클래스가 구현한다. `FullTimeEmployee`는 세 메서드를 모두 구현하고, `RobotWorker`는 `work()`만 구현하며 `eat()`과 `attendMeeting()`에서는 `UnsupportedOperationException`을 던진다.
 
-`eat()`을 `eat(Allergy a)`로 바꾸고 컴파일한다. 수정이 필요한 클래스를 모두 적고, 그중 알러지와 무관한 것을 표시하라.
-Back: `FullTimeEmployee`, `RobotWorker`. 알러지와 무관한 것은 `RobotWorker`.
+총무팀 요청으로 `eat()`을 `eat(Allergy a)`로 바꾸고 빌드했다. 구현 클래스 중에서 수정이 필요한 것을 모두 적고, 그중 알러지와 상관없는 것을 표시하라. 문제는 컴파일 시점과 실행 시점 중 언제 드러나는가?
+Back: `FullTimeEmployee`, `RobotWorker` — 알러지와 무관한 것은 `RobotWorker` / 컴파일 시점
 
-두 클래스 모두 `Worker`를 구현하므로 시그니처 변경에 컴파일이 걸린다. `RobotWorker`는 밥을 먹지 않는데도 같이 열린다.
+두 클래스 모두 `Worker`를 구현하므로 시그니처가 바뀌면 컴파일이 깨진다. `RobotWorker`는 밥을 먹지 않는데도 같이 열린다.
 Tags: oop::solid::isp
 END
 
 START
 Basic
-[OOP] `interface Worker { work(); eat(); attendMeeting(); }`를 `FullTimeEmployee`와 `RobotWorker`가 구현한다.
+[OOP] `interface Worker { void work(); void eat(); void attendMeeting(); }`를 사람 직원 `FullTimeEmployee`(셋 다 구현)와 `RobotWorker`(`work()`만 구현, 나머지 둘은 `UnsupportedOperationException`)가 함께 구현한다.
 
-`eat()`의 시그니처 변경이 `RobotWorker`에 닿지 않도록 ISP에 맞게 재구성하라. 인터페이스를 어떻게 나누고, `RobotWorker`는 무엇을 구현하는가?
-Back: `Workable` / `Eatable` / `Attendable`로 쪼갠다. `RobotWorker`는 `Workable`만 구현한다.
+`eat()`의 시그니처가 바뀌어도 `RobotWorker`가 영향을 받지 않도록 ISP에 맞게 재구성하라. 인터페이스를 무엇을 기준으로 나누고, `RobotWorker`는 무엇에만 의존하게 되는가?
+Back: 클라이언트가 실제로 쓰는 메서드 묶음마다 인터페이스를 나눠, `RobotWorker`는 일하기 묶음에만 의존한다.
 
 판정 기준:
-- `RobotWorker`가 구현하는 인터페이스에 `eat`이 없는가
-- `eat()` 시그니처를 바꿨을 때 컴파일이 걸리는 클래스가 `FullTimeEmployee`뿐인가
-- `RobotWorker`에 `UnsupportedOperationException`을 던지는 메서드가 남지 않는가
-Tags: oop::solid::isp
+- `eat()` 시그니처를 바꿨을 때 `RobotWorker`가 컴파일 대상에 걸리지 않는가
+- `RobotWorker`에 `UnsupportedOperationException`으로 채운 메서드가 하나도 남지 않는가
+- 각 클래스가 자신이 쓰는 메서드에만 의존하는가
+
+참고 구조(이름은 채점하지 않는다): `Workable` / `Eatable` / `Attendable`. `FullTimeEmployee`는 셋 다, `RobotWorker`는 `Workable`만 구현한다.
+Tags: oop::solid::isp fix
+END
+
+START
+Basic
+[SOLID] LSP(Liskov Substitution Principle, 리스코프 치환 원칙)의 정의를 한 문장으로 말하라.
+Back: 상위 타입 자리에 하위 타입을 넣어도 프로그램의 정확성이 깨지지 않아야 한다.
+
+채점: 뜻이 맞으면 정답.
+- 상위 타입이 쓰이던 자리에 하위 타입을 넣는 상황을 말했는가
+- 그래도 프로그램이 올바르게 동작해야 한다는 뜻이 들어 있는가
+오답 예: "하위 클래스는 상위 클래스를 상속해야 한다" — 문법 관계만 말하고, 넣었을 때 정확성이 유지되는지는 말하지 않는다.
+Tags: oop::solid::lsp def
+END
+
+START
+Basic
+[SOLID] 다음 정의에 해당하는 원칙은? (후보: SRP, OCP, LSP, ISP, DIP)
+
+상위 타입 자리에 하위 타입을 넣어도 프로그램의 정확성이 깨지지 않아야 한다.
+Back: LSP (Liskov Substitution Principle, 리스코프 치환 원칙)
+Tags: oop::solid::lsp def
 END
 
 START
@@ -104,42 +173,52 @@ class Rectangle {
     protected int width, height;
     void setWidth(int w)  { this.width  = w; }
     void setHeight(int h) { this.height = h; }
-    int  area()           { return width * height; }
+    int area()            { return width * height; }
 }
 class Square extends Rectangle {
     @Override void setWidth(int w)  { this.width = w; this.height = w; }
     @Override void setHeight(int h) { this.width = h; this.height = h; }
 }
-void testArea(Rectangle r) { r.setWidth(5); r.setHeight(4); assert r.area() == 20; }
+void testArea(Rectangle r) { r.setWidth(5); r.setHeight(4); assertEquals(20, r.area()); }
 ```
-`testArea(new Rectangle())`은 통과하고 `testArea(new Square())`는 실패한다.
-
-다섯 원칙 중 무엇을 어기는가? 위반의 근거는 어느 줄이며, 위반의 주체는 무엇인가?
+근거가 되는 줄은? 그 줄 때문에 다섯 원칙 중 어기는 원칙을 모두 적어라.
 Back: LSP
 
-근거: `Square.setHeight`가 `width`까지 덮어써서, "한 변만 바꾸고 다른 변은 건드리지 않는다"는 `Rectangle`의 규약을 항상 깬다.
-정의: 상위 타입 자리에 하위 타입을 넣어도 프로그램의 정확성이 깨지지 않아야 한다.
-위반의 주체는 `Square` 단독이 아니라 `Rectangle` 자리에 놓인 치환 관계다. `Square` 코드 자체에는 버그가 없다.
-OCP가 아닌 이유: 기존 코드를 한 줄도 수정하지 않았다. `Square`는 수정이 아니라 규약을 깨는 케이스를 만들어 낸 것이다.
+근거: `Square.setHeight`의 `this.width = h;`(및 `setWidth`의 `this.height = w;`) — `Rectangle`을 쓰는 코드는 "한 변을 바꾸면 다른 변은 그대로"라고 기대하는데, `Square`는 한 변을 바꿀 때 다른 변도 바꾼다.
+판정 대상은 `Square` 클래스 하나가 아니라 `Rectangle` 자리에 `Square`를 넣는 치환 관계다.
 Tags: oop::solid::lsp
 END
 
 START
 Basic
-[OOP] `Square extends Rectangle`에서 `setWidth(w)`와 `setHeight(h)`가 각각 두 변을 모두 같은 값으로 만든다.
+[OOP] `Square extends Rectangle`이다. `Rectangle`의 `setWidth(w)` / `setHeight(h)`는 자기 변만 바꾸고, `Square`는 두 메서드 모두 `width`와 `height`를 같은 값으로 바꾸도록 재정의했다. `area()`는 `width * height`다.
+`void testArea(Rectangle r) { r.setWidth(5); r.setHeight(4); assertEquals(20, r.area()); }`
 
-`testArea(Rectangle r) { r.setWidth(5); r.setHeight(4); assert r.area() == 20; }`에 `new Square()`를 넣으면, 두 호출 뒤의 `(width, height)`와 `area()`의 값은 각각 무엇인가? 사라진 값은?
-Back: `setWidth(5)` 후 (5, 5), `setHeight(4)` 후 (4, 4), `area()` = 16. 사라진 것은 `width = 5`.
+`testArea(new Square())`를 호출한다. `setWidth(5)` 직후와 `setHeight(4)` 직후의 `(width, height)`, `area()`의 반환값, 그리고 문제가 컴파일 시점과 실행 시점 중 언제 드러나는지 적어라.
+Back: (5, 5) → (4, 4), `area()` = 16 / 컴파일은 통과하고 실행 중에 `assertEquals`가 실패한다
 
-컴파일은 통과하고 실행 중에 조용히 틀린 값이 나온다.
+`setHeight(4)`가 `width`까지 4로 덮어써 `width = 5`가 사라진다. `testArea(new Rectangle())`이었다면 (5, 4)로 20이 나온다.
 Tags: oop::solid::lsp
 END
 
 START
-Cloze
-[LSP] {{c1::상위}} 타입 자리에 {{c1::하위}} 타입을 넣어도 프로그램의 정확성이 깨지지 않아야 한다.
-Back Extra: `Rectangle` 자리에 `Square`를 넣으면 `setWidth(5); setHeight(4)` 뒤 `area()`가 20이 아니라 16이다. 판정 대상은 클래스 하나가 아니라 치환 관계다.
-Tags: oop::solid::lsp
+Basic
+[SOLID] OCP(Open-Closed Principle, 개방-폐쇄 원칙)의 정의를 한 문장으로 말하라.
+Back: 확장에는 열려 있고 수정에는 닫혀 있어야 한다.
+
+채점: 뜻이 맞으면 정답.
+- 새 기능을 더할 수 있어야 한다(확장에 열림)는 뜻이 있는가
+- 그때 기존 코드를 고치지 않아야 한다(수정에 닫힘)는 뜻이 있는가
+Tags: oop::solid::ocp def
+END
+
+START
+Basic
+[SOLID] 다음 정의에 해당하는 원칙은? (후보: SRP, OCP, LSP, ISP, DIP)
+
+확장에는 열려 있고 수정에는 닫혀 있어야 한다.
+Back: OCP (Open-Closed Principle, 개방-폐쇄 원칙)
+Tags: oop::solid::ocp def
 END
 
 START
@@ -147,45 +226,63 @@ Basic
 [OOP]
 ```java
 double totalArea(List<Object> shapes) {
+    double sum = 0;
     for (Object s : shapes) {
         if (s instanceof Rectangle)   sum += ...;
         else if (s instanceof Circle) sum += ...;
     }
+    return sum;
 }
 ```
-기획 요청: "삼각형 추가". 이어서 "사다리꼴도".
+기획 요청: "삼각형 추가해 주세요."
 
-다섯 원칙 중 무엇을 어기는가? 근거는 어느 줄인가?
+근거가 되는 줄은? 그 줄 때문에 다섯 원칙 중 어기는 원칙을 모두 적어라.
 Back: OCP
 
-근거: `instanceof` 사슬 때문에 도형이 하나 늘 때마다 기존 `totalArea`를 열어 조건식을 추가해야 한다. 확장이 곧 수정이다.
-정의: 확장에는 열려 있고 수정에는 닫혀 있어야 한다.
+근거: `if (s instanceof Rectangle) ... else if (s instanceof Circle)` 사슬 — 면적 합계 코드가 도형 종류를 하나하나 지목하고 공식을 직접 들고 있다.
 Tags: oop::solid::ocp
 END
 
 START
 Basic
-[OOP] `totalArea`가 `instanceof` if 사슬로 `Rectangle`, `Circle`의 면적을 더한다.
+[OOP] 면적 합계를 구하는 `AreaCalculator.totalArea(List<Object> shapes)`가 `if (s instanceof Rectangle) ... else if (s instanceof Circle) ...` 사슬로 도형별 면적 공식을 직접 들고 있다.
 
-기획이 삼각형을, 이어서 사다리꼴을 추가해 달라고 했다. 새로 만드는 파일 수와 기존 파일을 수정하는 횟수는 각각 몇인가?
-Back: 신규 파일 2개 / 기존 파일 수정 2회
-
-도형마다 클래스 파일 하나가 새로 생기고, 그때마다 `totalArea`의 if 사슬에 조건식을 추가한다. 같은 작업이 도형 수만큼 반복된다.
-Tags: oop::solid::ocp
-END
-
-START
-Basic
-[OOP] `totalArea`가 `instanceof` if 사슬로 도형별 면적 공식을 직접 들고 있다.
-
-새 도형이 추가돼도 `totalArea`를 수정하지 않도록 OCP에 맞게 재구성하라. 무엇을 도입하고, 면적 공식은 어디로 가며, `totalArea`는 어떻게 되는가?
-Back: `interface Shape { double area(); }`를 도입하고 각 도형이 `area()`를 구현한다. `totalArea`는 `sum += s.area();` 한 줄이 된다.
+기획이 도형을 추가해도 `AreaCalculator`가 한 글자도 바뀌지 않도록 OCP에 맞게 재구성하라. 면적 공식은 누구의 책임이 되고, `AreaCalculator`는 무엇에 의존하게 되는가?
+Back: 면적 공식을 각 도형이 스스로 책임지게 하고, `AreaCalculator`는 "면적을 알려 준다"는 공통 추상에만 의존한다.
 
 판정 기준:
-- 새 도형을 추가할 때 기존 파일 수정 횟수가 0인가
-- 면적 공식이 `totalArea`가 아니라 각 도형 구현체에 있는가
-- `totalArea`에 `instanceof`가 남아 있지 않은가
-Tags: oop::solid::ocp
+- 삼각형을 추가할 때 `AreaCalculator`가 한 글자도 바뀌지 않는가
+- 새 도형 추가가 새 파일 작성만으로 끝나는가
+- `AreaCalculator`에 `instanceof`나 구체 도형 이름이 남아 있지 않은가
+
+참고 구조(이름은 채점하지 않는다):
+```java
+interface Shape { double area(); }
+class Rectangle implements Shape { public double area() { return w * h; } }
+double totalArea(List<Shape> shapes) { double sum = 0; for (Shape s : shapes) sum += s.area(); return sum; }
+```
+Tags: oop::solid::ocp fix
+END
+
+START
+Basic
+[SOLID] DIP(Dependency Inversion Principle, 의존성 역전 원칙)의 정의를 한 문장으로 말하라.
+Back: 상위 수준 모듈이 하위 수준 모듈에 의존하지 않고, 둘 다 추상에 의존한다.
+
+채점: 뜻이 맞으면 정답.
+- 상위 모듈이 하위 모듈(구체 구현)에 직접 의존하지 않는다는 뜻이 있는가
+- 상위와 하위 "둘 다" 추상에 의존한다는 뜻이 있는가
+오답 예: "의존성을 주입한다" — 주입은 이 원칙을 지키는 수단 중 하나일 뿐, 정의가 아니다.
+Tags: oop::solid::dip def
+END
+
+START
+Basic
+[SOLID] 다음 정의에 해당하는 원칙은? (후보: SRP, OCP, LSP, ISP, DIP)
+
+상위 수준 모듈이 하위 수준 모듈에 의존하지 않고, 둘 다 추상에 의존한다.
+Back: DIP (Dependency Inversion Principle, 의존성 역전 원칙)
+Tags: oop::solid::dip def
 END
 
 START
@@ -197,91 +294,119 @@ class OrderService {
     void placeOrder(Order o) { validate(o); repo.save(o); }
 }
 ```
-인프라팀 요청: "MongoDB로 교체". QA팀 요청: "DB 없이 `validate`만 테스트".
+요청자: 인프라팀(MongoDB로 교체), QA팀(DB 없이 `validate`만 테스트).
 
-다섯 원칙 중 무엇을 어기는가? 근거가 되는 부분은 그 줄의 어디인가?
+근거가 되는 줄은 어느 줄의 어느 부분인가? 그 부분 때문에 다섯 원칙 중 어기는 원칙을 모두 적어라.
 Back: DIP
 
-근거: `= new MySqlOrderRepository()` — 상위 모듈 `OrderService`가 자기 협력자를 구체 타입으로 직접 만든다. 그래서 DB 교체와 테스트 모두 `OrderService`를 고쳐야 한다.
-정의: 상위 수준 모듈이 하위 수준 모듈에 의존하지 않고, 둘 다 추상에 의존한다.
+근거: `= new MySqlOrderRepository()` — 주문 처리라는 상위 모듈 `OrderService`가 자기 협력자를 MySQL 구체 클래스로 직접 만든다.
 Tags: oop::solid::dip
 END
 
 START
 Basic
-[OOP] `OrderService`가 `private MySqlOrderRepository repo = new MySqlOrderRepository();`로 저장소를 들고 있다.
+[OOP] 주문 처리 클래스 `OrderService`가 필드 `private MySqlOrderRepository repo = new MySqlOrderRepository();`로 저장소를 직접 만들고, `placeOrder`는 `validate(o); repo.save(o);`를 수행한다. 생성자나 setter는 없다.
 
-인프라팀이 MongoDB 교체를, QA팀이 DB 없이 `validate`만 테스트하기를 요청했다. 각 요청에서 `OrderService`에 어떤 수정이 생기는가?
-Back: 교체: `repo`의 타입 변경. 테스트: 운영 클래스에 테스트용 저장소 필드를 추가하게 된다.
+QA팀: "DB 없이 `validate`만 테스트하고 싶어요." 이 요청을 들어주려면 운영 코드 중 어느 클래스를 수정해야 하며, 그 수정은 무엇을 위한 것인가?
+Back: `OrderService` — 저장소를 바깥에서 넣을 경로를 추가하기 위해 (생성자·setter 등 방법은 무관)
 
-두 요청 모두 `OrderService`를 연다. 특히 테스트를 위해 운영 코드를 고치게 되는 것이 문제다.
+저장소가 필드 초기화에서 `new MySqlOrderRepository()`로 정해져 있어, 운영 클래스를 고치지 않는 표준적인 방법으로는 가짜 저장소를 넣을 수 없다.
 Tags: oop::solid::dip
 END
 
 START
 Basic
-[OOP] `OrderService`가 `= new MySqlOrderRepository()`로 저장소를 직접 만든다.
+[OOP] 주문 처리 클래스 `OrderService`가 필드에서 `new MySqlOrderRepository()`로 저장소를 직접 만들고, `placeOrder`에서 `repo.save(o)`를 부른다.
 
-DB 교체와 테스트에서 `OrderService`가 수정되지 않도록 DIP에 맞게 재구성하라. 무엇을 도입하고, MySQL이라는 구체 정보는 어디로 가며, 저장소는 언제 어떻게 들어오는가?
-Back: 추상 `OrderRepository`를 두고 `MySqlOrderRepository`가 구현한다. `OrderService`는 추상 타입만 들고, 저장소는 생성 시점에 주입된다 — `new OrderService(new MongoOrderRepository())`.
+MongoDB 교체와 DB 없는 테스트 요청이 와도 `OrderService`를 수정하지 않도록 DIP에 맞게 재구성하라. `OrderService`는 무엇에 의존하고, "어떤 DB를 쓸지"의 결정은 어디로 옮겨 가는가?
+Back: `OrderService`는 저장소의 추상에만 의존하고, 어떤 구현을 쓸지는 `OrderService`를 조립하는 바깥(생성하는 쪽)이 정한다.
 
 판정 기준:
-- `OrderService` 안에 구체 저장소의 `new`가 없는가
-- `OrderService`의 필드 타입이 추상인가
-- 테스트용 저장소를 운영 코드 수정 없이 넣을 수 있는가
-Tags: oop::solid::dip
+- MongoDB 교체·테스트 요청에서 `OrderService`가 수정되지 않는가
+- `OrderService` 안에 구체 저장소 클래스 이름이 남아 있지 않은가
+- 구현 선택이 `OrderService` 바깥의 조립 시점에 있는가
+
+참고 구조(이름은 채점하지 않는다):
+```java
+interface OrderRepository { void save(Order o); }
+class OrderService {
+    private final OrderRepository repo;
+    OrderService(OrderRepository repo) { this.repo = repo; }
+}
+new OrderService(new MongoOrderRepository());
+```
+Tags: oop::solid::dip fix
 END
 
 START
 Basic
 [OOP] 두 후보: OCP, DIP.
 
-`AreaCalculator`가 `instanceof` 사슬로 `Rectangle`, `Circle`을 직접 지목하던 것을 `interface Shape { double area(); }`로 바꿔, 의존이 `AreaCalculator → Shape ← Rectangle, Circle, Triangle` 모양이 되었다.
+도형 목록의 면적 합계를 구하는 `AreaCalculator`가 `instanceof` 사슬로 `Rectangle`, `Circle`을 직접 지목하던 것을 `interface Shape { double area(); }`로 바꿔, 화살표가 `AreaCalculator → Shape ← Rectangle, Circle, Triangle`이 되었다.
 
 "기획이 삼각형을 추가해도 `AreaCalculator`는 한 글자도 바뀌지 않는다"는 이 그림의 어느 원칙에 대한 진술인가?
 Back: OCP
 
-구별 시험: 문장이 "새 요구가 와도 기존 코드를 수정하지 않는다"를 말하면 OCP, "양쪽이 구체가 아니라 추상에 의존한다"는 화살표 모양을 말하면 DIP. 같은 그림이 두 원칙의 근거가 되지만 이 문장은 수정 여부를 말하고 있다.
+구별 시험: 문장이 "새 요구가 와도 기존 코드를 수정하지 않는다"를 말하면 OCP, "상위·하위 모듈이 둘 다 구체가 아니라 추상에 의존한다"를 말하면 DIP. 같은 그림이 두 원칙의 근거가 되지만, 이 문장은 수정 여부를 말하고 있다.
 Tags: oop::solid::ocp
 END
 
 START
 Basic
-[OOP] 두 후보: (가) SRP·ISP처럼 "수정될 때 같이 흔들리는가"를 보는 원칙, (나) LSP처럼 "실행 중에 조용히 틀린 값이 나오는가"를 보는 원칙.
+[OOP] 두 후보: LSP, ISP.
 
-장면: 기존 코드는 한 글자도 수정하지 않았고 컴파일도 통과했는데, 새 하위 클래스를 기존 자리에 넣자 테스트가 실패한다.
+하위 클래스 하나를 새로 작성해 기존 상위 타입 자리에 넣었다. 기존 파일은 한 줄도 열지 않았다. 빌드와 배포는 문제없이 끝났는데, 손대지 않은 기존 테스트 하나가 20을 기대한 자리에서 16을 받고 실패한다.
 
-어느 쪽 원칙이 다루는 장면인가?
-Back: (나) LSP
+어느 원칙의 위반인가?
+Back: LSP
 
-구별 시험: 기존 코드 수정 횟수가 0인가. 0이면 "변경의 전파"가 아니라 치환이 규약을 깬 것이다.
-Tags: oop::solid
+구별 시험: 기존 코드 수정 0회로 실행 중 틀린 값이 나오면 LSP, 관련 없는 클래스까지 끌고 와 컴파일 단계에서 걸리면 ISP. (이 예제들에서의 구별 기준 — 일반 정의는 아니다)
+Tags: oop::solid::lsp
 END
 
 START
-Cloze
-[불변식] 불변식(invariant)은 {{c1::어떤 시점에도 참이어야 하는 상태에 대한 명제}}이며, 참/거짓을 따지려면 {{c2::값}}이 있어야 한다.
-Back Extra: `Rectangle`의 "`setHeight(h)` 뒤에도 `width`는 직전 값을 유지한다"는 실행 중 값으로 판정되는 불변식이다. 메서드 시그니처는 상태가 아니라 타입 선언이므로 불변식이 아니다.
+Basic
+[OOP] 클래스 불변식(class invariant)의 정의를 한 문장으로 말하라.
+Back: 객체의 공개 메서드 호출 전후마다 참이어야 하는, 객체 상태(필드 값)에 대한 명제다.
+
+채점: 뜻이 맞으면 정답.
+- 판정 대상이 객체의 상태(필드 값)인가
+- 성립 시점을 "공개 메서드 호출 전후"로 말했는가 (메서드가 실행되는 도중에는 잠시 깨질 수 있다)
+오답 예: "`setHeight(h)` 호출 후에도 `width`는 직전 값을 유지한다" — 한 메서드 호출 전과 후를 잇는 관계라서 불변식이 아니라 사후조건이다.
+Tags: oop::solid::invariant def
+END
+
+START
+Basic
+[OOP] 다음 정의에 해당하는 개념은? (후보: 불변식, 시그니처 약속)
+
+객체의 공개 메서드 호출 전후마다 참이어야 하는, 객체 상태(필드 값)에 대한 명제다.
+Back: 클래스 불변식 (class invariant)
+
+가르는 말: "객체 상태" — 시그니처 약속은 상태가 아니라 메서드 이름·인자·반환 타입의 선언이다.
+Tags: oop::solid::invariant def
+END
+
+START
+Basic
+[OOP] 두 후보: 불변식 위반, 시그니처 약속 위반.
+
+`interface Worker`의 `eat()`에 `Allergy a` 인자를 추가했다. 이 인터페이스를 구현하던 `RobotWorker`(`eat()`에서 예외만 던짐)는 고치기 전까지 프로그램을 빌드할 수 없었다. 어떤 객체도 만들어지지 않았다.
+
+`RobotWorker`가 깬 것은 어느 쪽인가?
+Back: 시그니처 약속 위반
+
+구별 시험: 실행 중 객체의 상태 값으로 참/거짓이 갈리면 불변식, 선언끼리 맞는지를 실행 전에 기계가 확인하고 끝나면 시그니처 약속이다.
 Tags: oop::solid::invariant
 END
 
 START
 Basic
-[OOP] 두 후보: 불변식 위반 / 불변식이 아닌 다른 종류의 약속 위반.
+[OOP] 다섯 SOLID 원칙이 공통으로 하는 일을 한 문장으로 말하라. LSP까지 포함되는 문장이어야 한다.
+Back: 잘못된 의존을 끊어, 수정하지도 새로 작성하지도 않은 코드에서 문제가 생기지 않게 한다.
 
-장면 A: `Square`에 `setHeight(4)`를 호출하자 `width`가 5에서 4로 바뀌었다.
-장면 B: `eat()`을 `eat(Allergy a)`로 바꾸자 `RobotWorker`가 컴파일되지 않는다.
-
-각 장면은 어느 쪽인가?
-Back: A는 불변식 위반, B는 불변식이 아닌 약속 위반
-
-구별 시험: 실행 중 값으로 참/거짓이 갈리는가. A는 실행 중 `width` 값이 규약을 어긴다. B는 타입 선언의 문제라 컴파일러가 실행 전에 잡고 끝나며, 실행에 도달하지 못한다.
-Tags: oop::solid::invariant
-END
-
-START
-Cloze
-[SOLID 공통점] 다섯 원칙이 공통으로 하는 일은 {{c1::잘못된 의존을 해체}}하고, {{c2::수정하거나 작성하지 않은 쪽}}에 문제가 생기는 것을 막는 것이다.
-Back Extra: "변경의 전파를 막는다"로는 LSP가 빠진다(기존 코드 수정 0회인데 손대지 않은 `testArea`가 깨진다). 의존이 사라지는 것이 아니라, ISP·DIP·OCP는 가리키는 대상이, SRP는 쏘는 쪽이 바뀌고, LSP는 그 자리에 들어올 수 있는 것이 제한된다.
+채점: 뜻이 맞으면 정답.
+- "변경한 쪽이 아닌 다른 쪽이 깨지는 것을 막는다"는 뜻이 들어 있는가
+- LSP도 설명되는가: `Square`를 새로 작성했을 뿐 기존 코드 수정은 0회인데 손대지 않은 `testArea`가 깨진다. "변경의 전파를 막는다"로만 쓰면 이 경우가 빠진다.
 Tags: oop::solid
 END

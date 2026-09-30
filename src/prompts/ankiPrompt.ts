@@ -1,3 +1,19 @@
+// 2026.09.30 4차 변경점 (SOLID·격리 메커니즘 카드를 복습하며 드러난 두 가지 결함)
+//
+// 1. 자기완결 규칙(§4.9)을 추가했다. 카드 밖의 전제를 기억해야 풀리는 카드가 많았다.
+//    예: "[OOP] 위와 같은 Employee"(프롬프트 예시 자체), "A는 Y의 옛 버전 1000을 받아 합계 2000"(X·Y 초기값과 이체액 누락),
+//    "[LSP] Square 코드 자체에는 버그가 없고"(Square가 무엇을 덮어쓰는지 누락), Back Extra의 "계좌 이체 예에서".
+//    원인 하나는 §5의 "전체 아티팩트는 한 카드에만, 형제 카드는 한 줄 압축 참조" 규칙이었다.
+//    이 규칙을 "압축은 허용하되 답을 정하는 사실은 모두 남긴다"로 바꿨다.
+// 2. 정의 카드(DEFINE, Basic R)를 개념마다 1장 필수로 추가했다(§2, §3, §5). 2차 변경점 1번(정의는 I 카드 뒷면
+//    "정의:" 한 줄)을 되돌렸다. 뒷면에서 읽기만 하면 정의를 스스로 말해 보는 연습이 한 번도 일어나지 않는다.
+//    Cloze로 정의의 한 조각("{{c1::치환 관계}}")을 가리는 것은 앞뒤 문맥으로 추론되므로 정의 카드를 대신하지 못한다.
+//    I 뒷면의 "정의:" 줄은 정의 카드의 답을 누설하므로(§5.1) 뺐다.
+// 3. 역방향 정의 카드(NAME)를 DEFINE과 짝으로 추가했다. 용어 → 정의를 말할 수 있어도 정의 → 용어가 되는 것은 아니다.
+//    닫힌 후보 집합(SOLID 다섯 원칙)이면 후보를 나열해 이웃 개념끼리 가르게 한다. DEFINE·NAME 짝은 서로의 답을
+//    보여 주는 것이 설계 의도이므로 형제 누설 점검의 유일한 예외다. 짝은 개념당 3장 예산 밖이고, 재점검 기준은 30장.
+// 4. examples/solid-reference.md를 3·4차 기준으로 다시 썼다(3차 변경점 8번 해소).
+
 // 2026.09.29 3차 변경점 (SOLID 카드 20장을 외부 리뷰에 돌려 받은 지적)
 //
 // 1. 형제 카드 누설 점검(§5.1)을 추가했다. 2차 변경점 2번(I 카드 앞면에 결과 한 줄을 붙여 판정 고정)은 되돌렸다.
@@ -92,8 +108,12 @@ Hard syntax constraints:
 2. FIVE CARD TYPES — choose by what the learner must DO on the answer side
 ================================================================
 
-  R  RECALL        Cloze   Name a term, a definition, a value, a mapping.
+  R  RECALL        Cloze   Name a term, a value, a mapping.
                            (Basic when the answer is a whole proposition — see "sentence-sized answers" below.)
+     DEFINE        Basic   A special R card: given the concept's name, state its full definition in one sentence.
+                           Graded by meaning against the definition's essential parts. One per defined concept (§3).
+     NAME          Basic   The reverse of DEFINE: given the definition sentence, name the concept.
+                           Always paired with a DEFINE card — term → definition AND definition → term.
   I  IDENTIFY      Basic   Read an artifact (code, scenario) and say what it is an instance of —
                            which principle it violates or serves, which pattern it is, and point to the line.
   P  PREDICT       Basic   Read an artifact plus one event (a request, a call, a change) and state
@@ -112,6 +132,26 @@ Sentence-sized answers. If the answer is a whole proposition — especially word
 Make it a Basic R card: front asks to state it in one sentence ("다섯 원칙이 공통으로 하는 일을 한 문장으로 말하라"),
 back = the proposition, a blank line, then "채점: 뜻이 맞으면 정답" and 1-2 criteria naming what the sentence must cover.
 
+Definition cards. Filling one blank inside a definition ("LSP가 판정하는 대상은 {{c1::치환 관계}}다") is guessable
+from the surrounding words and never makes the learner produce the whole definition. Reading the definition on an
+I card's back is passive. So every concept whose definition the note states gets one DEFINE card:
+  front: "[<domain>] <term>(<English term>)의 정의를 한 문장으로 말하라." — the term only, no hint of the content.
+  back:  the definition as the note states it (narrowed per §7.5), a blank line, then
+         "채점: 뜻이 맞으면 정답." and one criterion per essential part of the definition (2-4 total),
+         plus "오답 예:" with the most common near-miss when the note shows one (e.g. "클래스는 한 가지 일만 한다").
+  tags:  the concept tag plus "def" ("Tags: oop::solid::srp def").
+Knowing the term → definition direction does not guarantee the definition → term direction, and vice versa.
+So each DEFINE card has a NAME card:
+  front: "[<domain>] 다음 정의에 해당하는 개념은? (후보: <A, B, C ...>)", a blank line, then the definition sentence
+         exactly as on the DEFINE card's back. List the candidates when the concepts form a known closed set in
+         the note (the five SOLID principles), so the card tests telling neighbours apart, not free association.
+         Remove the term, its abbreviation, and its English name from the sentence; do not otherwise reword it.
+  back:  the term with its English name. Optionally one line "가르는 말: <the phrase in the definition that rules
+         out the nearest candidate>" — only when no D card tests that same pair (otherwise it leaks the D answer, §5.1).
+  tags:  the concept tag plus "def".
+If the note uses a term but never states its definition, there is no DEFINE or NAME card (§7.4).
+6.2 ("hide the keyword, show the explanation") governs Cloze cards only; DEFINE and NAME are Basic cards.
+
 Do not chase any ratio between types. Let the note's content decide through the plan in §3.
 
 ================================================================
@@ -120,20 +160,23 @@ Do not chase any ratio between types. Let the note's content decide through the 
 
 Step 1. List the distinct concepts in scope (e.g. the five SOLID principles; two isolation levels).
         If the caller gave a learning objective, only concepts inside it count.
-Step 2. For each concept the note illustrates with code or a concrete scenario:
+Step 2. For each concept whose definition the note states: one DEFINE card and one NAME card (§2).
+        The pair is outside the budget below.
+        For each concept the note illustrates with code or a concrete scenario:
           - one I card (the artifact, de-labeled, "what is this an instance of").
-            The concept's definition sentence goes on the I card's back (§5), not into a separate R card.
+            The definition does NOT go on the I card's back — it would hand over the DEFINE card's answer (§5.1).
           - one F card if the note states the fix, otherwise one P card if the note states the consequence
           - a third card (P alongside F, a variant I per §4.8, or R) only if it tests something the first two do not
         For a concept the note states but never illustrates: one R card, if the sentence is worth memorising.
         A session-wide conclusion the note marks as reached ([도달], "최종 명제") is subject knowledge:
         one Basic R card graded by meaning (§2), rewritten as a self-contained sentence.
 Step 3. For each pair of concepts the note explicitly contrasts: at most one D card.
-Step 4. Budget: at most 3 cards per concept. There is no fixed per-note cap — the concept list and the
-        learning objective set the size. If the total passes 20, re-check the concept list for incidental
+Step 4. Budget: at most 3 cards per concept, not counting its DEFINE and NAME cards. There is no fixed per-note cap — the
+        concept list and the learning objective set the size. If the total passes 30, re-check the concept list for incidental
         concepts before writing; if a concept is over 3, drop R first, then merge P into I.
 Step 5. Optionally write the plan as ONE HTML comment on the first line of the output, e.g.
-        <!-- plan: SRP I+P+F, ISP I+P+F, LSP I+P+R, OCP I+F, DIP I+F, D: OCP-vs-DIP -->
+        <!-- plan: SRP def×2+I+P+F, ISP def×2+I+P+F, LSP def×2+I+P, OCP def×2+I+F, DIP def×2+I+F, D: OCP-vs-DIP -->
+        ("def×2" = one DEFINE + one NAME card)
         The plugin ignores it. Nothing else may appear outside START/END.
 
 ================================================================
@@ -193,6 +236,25 @@ Step 5. Optionally write the plan as ONE HTML comment on the first line of the o
     It counts toward the 3-card budget and replaces the concept's R or P card, never its I or F card.
     Tag it with the concept tag plus "::variant" (oop::solid::srp::variant).
 
+4.9 SELF-CONTAINED. Every card — every type, front and back — must be answerable by someone who knows the subject
+    in general but has never seen the note or any other card in the set. Anki shows cards one at a time, in any
+    order, months apart. A premise that lives outside the card is a premise the learner must memorise separately.
+    State on the card every fact the answer depends on:
+    - initial values and constraints ("X=1000, Y=1000, 두 계좌 합계는 항상 2000이어야 한다", "이체액 300")
+    - system rules that are not universal (when locks are released, whether versions are kept,
+      the isolation level, the DB product when behaviour differs by product)
+    - the parts of the code that decide the answer (which method uses which helper, what the override writes,
+      the format string whose output is asked for), as a short code block or one precise sentence
+    - the role of every name on first use in that card ("면적 합계를 구하는 AreaCalculator", "계좌 합계를 읽는 트랜잭션 A")
+    - timeline labels (T2, T7) only when the same card defines them
+    Forbidden anywhere on a card, including Back and Back Extra: "위와 같은", "앞의 예", "계좌 이체 예에서",
+    "같은 Employee", or any other pointer to material the card does not contain. If Back Extra uses an example,
+    spell the example out in that Back Extra.
+    A [Topic] prefix is a label, not a premise; it does not supply missing facts.
+    Test: cover every other card and the note. Can the answer be derived from this card alone, and is it the
+    only answer? If a fact is missing, add it; if adding it makes the front long, compress it to one sentence —
+    but never drop a fact the answer depends on.
+
 ================================================================
 5. BACK FORMAT — what the answer side must contain
 ================================================================
@@ -203,7 +265,7 @@ I back:
   <principle / concept — or both, when both honestly apply (4.3)>
 
   근거: <the line or expression, quoted, and what it couples. NOT the downstream consequence — that is the P card's answer.>
-  정의: <the concept's definition sentence as the note states it — this is where the definition is learned>
+  <no "정의:" line — the definition is the DEFINE card's answer (§2, §5.1)>
   <one line: why the nearest confusable concept is NOT the answer — only when the note supports it AND that
    concept truly does not apply to this artifact. If it also applies, it belongs in the verdict line, not here.>
 
@@ -235,9 +297,9 @@ D back:
 Cloze Back Extra: the example, mechanism, counterexample, or boundary condition, 1-3 lines.
 Putting that context in the first field instead is a defect, not a style choice — it leaks answers (see 6.4).
 
-Repetition control: within one generated set, write the FULL artifact in exactly one card.
-Siblings get a one-line compressed reference. Repeating a 12-line block across five cards makes every
-review heavier for no added recall.
+Repetition control: within one generated set, write the FULL artifact (the 10-15 line code block) in exactly one card.
+Siblings may compress it to a sentence or a 2-4 line excerpt, but the compressed form must still carry every fact
+its own answer depends on (§4.9). "위와 같은 Employee" is not compression; it is a missing premise.
 
 5.1 SIBLING LEAK CHECK. The cards for one concept are separate Anki notes, so Anki's bury-siblings setting does
     not keep them apart; any of them can be reviewed right after another. For every card, read its front AND back
@@ -246,6 +308,10 @@ review heavier for no added recall.
     - an I front carrying the consequence a P card asks for ("RobotWorker도 고쳐야 컴파일이 된다")
     - an I back narrating the outcome a P card asks to trace ("재무팀 요청이 인사팀 결과에 닿는다")
     - an F front describing the fixed structure a D card asks about
+    - an I back or a Cloze carrying the definition sentence a DEFINE card asks for
+    - a NAME back's "가르는 말" line restating the test of a D card on the same pair
+    The one allowed exception: a DEFINE card and its NAME card show each other's answer by design.
+    They test the two retrieval directions of the same pair; do not "fix" either one.
     Fix the leaking card, not the leaked one: move the consequence out, keep only the line and what it couples.
 
 ================================================================
@@ -333,6 +399,7 @@ review heavier for no added recall.
   Use one tag family across one generated set so it can be filtered as a unit. No difficulty tags.
 - F cards add a second, space-separated tag "fix" ("Tags: oop::solid::srp fix"). F answers take long to grade,
   so the learner may move them to a separate deck with longer intervals.
+- DEFINE and NAME cards add a second tag "def" ("Tags: oop::solid::srp def").
 - Emit "TARGET DECK: {deck}" and "FILE TAGS: {tags}" as the first lines ONLY if the caller supplied a deck.
   Otherwise omit both.
 
@@ -348,12 +415,13 @@ split by actor into EmployeeData / PayCalculator / HourReporter / EmployeeReposi
 after introducing Shape the arrows become AreaCalculator → Shape ← Rectangle, Circle — "this shape is DIP".
 The note ends with reflections on the learner's answering patterns and a list of open questions.
 
-Plan: SRP I+P+F, ISP I+P+F, LSP I+P+R, OCP I+F, DIP I+P+F, D: OCP-vs-DIP, D: LSP-vs-ISP,
-불변식 R+D, 공통명제 R — 19 cards. Reflections and open questions: no cards.
+Plan: SRP def×2+I+P+F, ISP def×2+I+P+F, LSP def×2+I+P, OCP def×2+I+F, DIP def×2+I+P+F, D: OCP-vs-DIP, D: LSP-vs-ISP,
+불변식 def×2+D, 공통명제 R — 29 cards. Reflections and open questions: no cards.
 OCP has no P card: the note's only OCP consequence is a count (new files / edited files), which §4.4 forbids.
-The six cards below are a sample of that set.
+LSP has no Cloze R card: its definition is now a DEFINE card, and "{{c1::치환 관계}}" would only repeat a fragment of it.
+The seven cards below are a sample of that set. The full expected output is examples/solid-reference.md.
 
-<!-- plan: SRP I+P+F, ISP I+P+F, LSP I+P+R, OCP I+F, DIP I+P+F, D: OCP-vs-DIP, D: LSP-vs-ISP, 불변식 R+D, 공통명제 R -->
+<!-- plan: SRP def×2+I+P+F, ISP def×2+I+P+F, LSP def×2+I+P, OCP def×2+I+F, DIP def×2+I+P+F, D: OCP-vs-DIP, D: LSP-vs-ISP, 불변식 def×2+D, 공통명제 R -->
 
 START
 Basic
@@ -374,14 +442,13 @@ class Employee {
 Back: SRP
 
 근거: \`private int billableHours()\` — 서로 다른 요청자가 관할하는 \`calculatePay\`와 \`reportHours\`가 이 한 줄을 공유한다. 세 요청이 모두 같은 \`Employee\` 파일을 연다.
-정의: 하나의 모듈은 하나의 액터(변경을 요구하는 주체)에 대해서만 책임진다.
 ISP가 아닌 이유: 쓰지 않는 메서드에 의존하도록 강요받는 클라이언트가 없다. 문제는 인터페이스가 아니라 한 클래스가 여러 액터를 섬기는 것이다.
 Tags: oop::solid::srp
 END
 
 START
 Basic
-[OOP] \`Employee.billableHours()\`는 \`min(hoursWorked, 40)\`이고, \`calculatePay\`와 \`reportHours\`가 둘 다 이 헬퍼를 쓴다.
+[OOP] \`Employee.billableHours()\`는 \`min(hoursWorked, 40)\`이다. 수당 계산 \`calculatePay()\`는 \`billableHours() * hourlyRate\`를, 인사팀 리포트 \`reportHours()\`는 \`"총 " + billableHours() + "시간"\`을 반환한다.
 
 재무팀 요청으로 40시간 상한을 제거해 \`return hoursWorked;\`로 바꾸고 배포했다. \`hoursWorked = 50\`인 직원의 인사팀 월간 리포트 문자열은 배포 전과 후에 각각 무엇인가?
 Back: 전: "총 40시간" / 후: "총 50시간"
@@ -392,8 +459,9 @@ END
 
 START
 Basic
-[OOP] 위와 같은 \`Employee\`(calculatePay / reportHours / save, 공유 헬퍼 billableHours)를,
-재무팀 요청이 인사팀 리포트 값을 바꾸지 않도록 SRP에 맞게 재구성하라. 무엇을 기준으로 나누고, 재무팀 요청은 어떤 책임을 가진 단위만 열게 되는가?
+[OOP] \`Employee\` 한 클래스에 수당 계산 \`calculatePay\`(재무팀 관할), 근무시간 리포트 \`reportHours\`(인사팀 관할), DB 저장 \`save\`(DBA 관할)가 있다. 앞의 두 메서드는 근무시간을 40시간으로 자르는 헬퍼 \`billableHours()\`를 함께 쓴다.
+
+이 클래스를, 재무팀 요청이 인사팀 리포트 값을 바꾸지 않도록 SRP에 맞게 재구성하라. 무엇을 기준으로 나누고, 재무팀 요청은 어떤 책임을 가진 단위만 열게 되는가?
 Back: 요청자(액터)마다 단위를 나눠, 재무팀 요청은 수당 계산을 맡은 단위 하나만 연다.
 
 판정 기준:
@@ -409,7 +477,7 @@ START
 Basic
 [OOP] 두 후보: OCP, DIP.
 
-\`AreaCalculator\`가 \`instanceof\` 사슬로 \`Rectangle\`, \`Circle\`을 직접 지목하던 것을 \`interface Shape { double area(); }\`로 바꿔 화살표가 \`AreaCalculator → Shape ← Rectangle, Circle, Triangle\`이 되었다.
+도형 목록의 면적 합계를 구하는 \`AreaCalculator\`가 \`instanceof\` 사슬로 \`Rectangle\`, \`Circle\`을 직접 지목하던 것을 \`interface Shape { double area(); }\`로 바꿔 화살표가 \`AreaCalculator → Shape ← Rectangle, Circle, Triangle\`이 되었다.
 
 "기획이 삼각형을 추가해도 \`AreaCalculator\`는 한 글자도 바뀌지 않는다"는 이 그림의 어느 원칙에 대한 진술인가?
 Back: OCP
@@ -419,10 +487,26 @@ Tags: oop::solid::ocp
 END
 
 START
-Cloze
-[LSP] {{c1::상위}} 타입 자리에 {{c1::하위}} 타입을 넣어도 프로그램의 정확성이 깨지지 않아야 한다.
-Back Extra: \`Rectangle\` 자리에 \`Square\`를 넣으면 \`setWidth(5); setHeight(4)\` 뒤 \`area()\`가 20이 아니라 16이다. 컴파일은 통과하고, \`assertEquals(20, r.area())\` 같은 검사가 실행 중에 실패한다.
-Tags: oop::solid::lsp
+Basic
+[SOLID] SRP(Single Responsibility Principle, 단일 책임 원칙)의 정의를 한 문장으로 말하라.
+Back: 하나의 모듈은 하나의 액터(변경을 요구하는 주체)에 대해서만 책임진다.
+
+채점: 뜻이 맞으면 정답.
+- 책임의 단위를 "기능"이나 "일"이 아니라 변경을 요구하는 사람·집단(액터)으로 말했는가
+- 한 모듈이 섬기는 액터가 하나여야 한다는 뜻이 들어 있는가
+오답 예: "클래스는 한 가지 일만 해야 한다" — 액터가 빠져 있어, 한 가지 일을 두 요청자가 고치는 경우를 설명하지 못한다.
+Tags: oop::solid::srp def
+END
+
+START
+Basic
+[SOLID] 다음 정의에 해당하는 원칙은? (후보: SRP, OCP, LSP, ISP, DIP)
+
+하나의 모듈은 하나의 액터(변경을 요구하는 주체)에 대해서만 책임진다.
+Back: SRP (Single Responsibility Principle, 단일 책임 원칙)
+
+가르는 말: "액터" — ISP도 무언가를 작게 나누지만, ISP의 기준은 클라이언트가 쓰지 않는 메서드다.
+Tags: oop::solid::srp def
 END
 
 START
@@ -442,7 +526,14 @@ because every card that came out of them needed the session's own numbering to m
 Also note:
 - The SRP I card front never says "SRP", never says "액터", and has no "// bad" comment.
 - The SRP I back quotes the line and what it couples, but does not say what happens to the HR report —
-  that is the P card's answer.
+  that is the P card's answer. It has no "정의:" line — that is the DEFINE card's answer.
+- The SRP P front states the report's format string, because the asked-for output ("총 40시간") depends on it.
+- The SRP F front restates the class's methods, their owners, and the shared helper instead of pointing to
+  another card ("위와 같은 Employee") — every card is reviewed alone (§4.9).
+- The SRP DEFINE card's front gives only the name. Its criteria name the definition's essential parts, and the
+  near-miss answer is marked wrong explicitly.
+- The SRP NAME card is the reverse: the same sentence, the five candidates, and the term as the answer.
+  Its "가르는 말" contrasts SRP with ISP because no D card tests that pair.
 - The OCP-vs-DIP D card's back does not reuse the front's word "화살표" as its test.
 - The common-principle card is Basic graded by meaning, because its wording is the learner's own synthesis.
 
@@ -461,8 +552,9 @@ Run every card through this. Fix, do not annotate.
 7.  Cloze: any deleted word visible elsewhere? Any 3+ distinct cloze numbers? Any raw "{" in a Cloze first
     field? Any deletion inside a code fence?
 8.  Did any fact enter that the note does not state? Did a hedge become a confident answer?
-9.  Any concept over 3 cards? Drop R first, then merge P into I. Any I card missing its 정의 line when the
-    note states a definition?
+9.  Any concept over 3 cards (not counting its DEFINE and NAME cards)? Drop R first, then merge P into I.
+    Any concept whose definition the note states but that lacks a DEFINE card or a NAME card?
+    Any I back carrying a "정의:" line?
 10. Trailing whitespace on any START / END / TARGET DECK / FILE TAGS line? Full artifact repeated in
     more than one card?
 11. Sibling leak (§5.1): does any card's front or back state the answer of another card in the set?
@@ -475,6 +567,13 @@ Run every card through this. Fix, do not annotate.
     An answer that is one of several valid solutions?
 15. Any cloze deletion longer than a noun phrase, or in the note's coined wording? Make it a Basic R card.
     Any F card whose back grades class names instead of criteria, or that lacks the "fix" tag?
+16. Self-contained (§4.9): cover every other card and the note. Can each card be answered from itself alone?
+    Any missing initial value, constraint, system rule, code line, or name role? Any "위와 같은", "앞의 예",
+    "~ 예에서" pointer on the front, back, or Back Extra? Any timeline label the card does not define?
+17. DEFINE cards: does the front give the term only? Does the back have "채점: 뜻이 맞으면 정답." with 2-4
+    criteria covering the definition's essential parts, and the "def" tag?
+    NAME cards: is the front's sentence identical to its DEFINE back minus the term? Are candidates listed for a
+    closed set? Does a "가르는 말" line repeat a D card's test?
 
 ================================================================
 11. OUTPUT
